@@ -1,0 +1,496 @@
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+<link rel="import" href="../../components/polymer/polymer.html">
+<link rel="import" href="../../components/fs-styles/fs-styles.html">
+
+<!--
+An element providing a drop-down overflow menu.
+
+Example:
+
+    <birch-overflow-menu drop-position='right'>
+      <ul>
+        <li>Item 1</li>
+        <li>Item 2</li>
+        <li>Item 3</li>
+      </ul>
+    </birch-overflow-menu>
+
+@group Seed Elements
+@element birch-overflow-menu
+@demo demo/index.html
+@hero hero.svg
+-->
+<dom-module id="birch-overflow-menu">
+  <style include='fs-styles'></style>
+  <link rel="import" type="css" href="birch-overflow-menu.css">
+
+  <template>
+    <div id='contentDiv' class='overflow-menu-container'  hidden='[[hideMenu]]'>
+      <content></content>
+    </div>
+  </template>
+
+</dom-module>
+
+<script>
+
+  Polymer({
+
+    is: 'birch-overflow-menu',
+
+    properties: {
+      /**
+       * The original drop position as passed in from the parent.
+       */
+      _originalDropPosition: {
+        type: String,
+        value: 'left'
+      },
+
+      /**
+       * `hideMenu` indicates that the element should be hidden
+       */
+      hideMenu: {
+        type: Boolean,
+        value: false
+      },
+
+      /**
+       * `target` indicates the id of the element that the overflow-menu should
+       * appear under
+       */
+      target: {
+        type: Object,
+        value: null
+      },
+
+      /**
+       * `dropPosition` indicates whether you want the menu to align with the left
+       * or right side of the target element
+       */
+      dropPosition: {
+        type: String,
+        value: 'left'
+      },
+
+      /**
+       * Indicates if this a context menu. This enables a right mouse click to open the actions menu.
+       */
+      isContextMenu: {
+        type: Boolean,
+        value: false
+      },
+
+      /**
+       * Coordinates used to position the context menu.
+       */
+      coordinates: {
+        type: Object,
+        value: function() {
+          return {x: 0, y: 0};
+        }
+      },
+
+      /**
+       * The left drop position.
+       */
+      LEFT: {
+        type: String,
+        value: 'left'
+      },
+
+      /**
+       * The right drop position
+       */
+      RIGHT: {
+        type: String,
+        value: 'right'
+      },
+
+      SCROLLBAR_WIDTH: {
+        type: Number,
+        value: 25
+      },
+
+      /**
+       * Indicates if the site is in mobile view.
+       */
+      _isMobile: {
+        type: Boolean,
+        value: false
+      },
+
+      /**
+       * Indicates whether or not to close the menu when the browser window is resized.
+       */
+      remainOpenOnResize: {
+        type: Boolean,
+        value: false
+      }
+    },
+
+    ready: function() {
+      /* Preserve the original drop position as passed in by the parent. */
+      this._originalDropPosition = this.dropPosition;
+
+      this.listen(window, 'resize', '_handleResize');
+
+      /* Prevent the default context menu event when right clicking on the menu itself. */
+      this.listen(this, 'contextmenu', '_preventDefaultContextMenu');
+
+      /* Fires an event to tell all menus to hide when user clicks anywhere off the menu. */
+      this.listen(document, 'tap', '_fireHideMenuEvent');
+
+      /* Handle the hide menu event. */
+      this.listen(document, 'hideOverflowMenuEvent', 'hide');
+    },
+
+    attached: function() {
+      this.async(this.positionMenu.bind(this));
+    },
+
+    /**
+     * Positions the overflow-menu.
+     *
+     * The menu automatically flips to the dropPosition if the left side of menu hits the left edge of
+     * the browser window, or if the right side of the menu hits the rigth edge of the browser window.
+     * It favors returning to the dropPosition passed in by the parent, if there is space to do so.
+     */
+    _doPositionMenu: function() {
+      if (!this.target) {
+        return;
+      }
+
+      /* Will auto flip only if it's necessary. */
+      this._autoFlip();
+
+      /* Set the postion of the arrow. */
+      if (this.dropPosition === "right") {
+        /* Move the arrow from the left side to the right side. */
+        this.$.contentDiv.classList.remove('left-actions-menu');
+        this.$.contentDiv.classList.add('right-actions-menu');
+      } else {
+        /* Move the arrow from the right side to the left side. */
+        this.$.contentDiv.classList.remove('right-actions-menu');
+        this.$.contentDiv.classList.add('left-actions-menu');
+      }
+
+      /* Set the position of the menu. */
+      var menuLeftPosition = this._calculateMenuLeftPosition();
+      this.style.left = menuLeftPosition + 'px';
+
+      /* Needed for Safari. */
+      if (this._isMobile) {
+        this.style.top = this.target.getBoundingClientRect().top + this.target.offsetHeight + 5 + 'px';
+      } else {
+        this.style.top = this.target.offsetTop + this.target.offsetHeight + 5 + 'px';
+      }
+    },
+
+    /**
+     * Calculates the left position of the menu DOM object based on the `dropPosition` provided.
+     * It attempts to position the menu so that the tip of the arrow points to the middle of the
+     * target.  The target is the DOM element that was clicked on to show the menu.
+     *
+     * @param dropPosition
+     * @returns {*}
+     */
+    _calculateMenuLeftPosition: function(dropPosition) {
+      dropPosition = dropPosition || this.dropPosition;
+
+      /* Reset to the left before making calculations. If this is not done, the left position will be
+       * wrong if the dropPosition is set to this.RIGHT and the target is clicked for the first time to
+       * show the menu. Subsequent clicks seem to position the menu correctly. */
+      this.style.left = "0px";
+
+      /* Distance from the edge of the menu to the tip of the arrow. */
+      var arrowTipOffset = 30;
+
+      /* Calculate the middle of the target. */
+      var middleOfTarget = this.target.offsetLeft + (this.target.offsetWidth / 2);
+
+      var menuLeftPosition;
+      if (dropPosition === this.RIGHT) {
+        /*
+         * 1. Start with the left edge of the menu being aligned with the middle of the target and
+         * the tip of the arrow about `arrowTipOffset` pixels from the right edge of the menu.
+         *
+         * 2. Then subtract the width of the menu to move the menu to the left so that the right edge
+         * of the menu is aligned with the middle of the target.
+         *
+         * 3. Then move it back to the right a little so that the tip of arrow is aligned with the
+         * middle of the target. */
+        menuLeftPosition = middleOfTarget - this.$.contentDiv.offsetWidth + arrowTipOffset;
+      } else {
+        /*
+         * 1. Start with the left edge of the menu being aligned with the middle of the target and
+         * the tip of the arrow about `arrowTipOffset` pixels from the left edge of the menu.
+         *
+         * 2. Then move it back to the left a little so that the tip of arrow is aligned with the
+         * middle of the target. */
+        menuLeftPosition =  middleOfTarget - arrowTipOffset;
+      }
+
+      return menuLeftPosition;
+    },
+
+    /**
+     * Determines if the menu has flipped by comparing the current drop position with the original
+     * one passed in by the parent.
+     *
+     * @returns {boolean}
+     */
+    _hasFlipped: function() {
+      return this.dropPosition !== this._originalDropPosition;
+    },
+
+    /**
+     * Flips the menu to the opposite drop position if the current drop position doesn't have enough
+     * space between the edge of the menu and the edge of the browser.  It favors trying to flip back
+     * to the drop position originally passed in by the parent.
+     */
+    _autoFlip: function() {
+      if (this._hasFlipped()) {
+        if (this._hasSpace(this._originalDropPosition)) {
+          /* If the menu is not in it's original drop position and there is enough space to display it in
+           * the original drop prosition, then flip it back to the original drop position. */
+          this.dropPosition = this._originalDropPosition;
+        }
+      } else if (!this._hasSpace()) {
+        /* If the menu doesn't have enough space to display, then flip it to the opposite drop position. */
+        this._flip();
+      }
+    },
+
+    /**
+     * Flips the drop position to the opposite side.
+     */
+    _flip: function() {
+      if (this.dropPosition === this.LEFT) {
+        this.dropPosition = this.RIGHT;
+      } else {
+        this.dropPosition = this.LEFT;
+      }
+    },
+
+    /**
+     * Determines if the menu has enough space to be displayed for the given drop position.
+     *
+     * @param dropPosition
+     * @returns {boolean}
+     */
+    _hasSpace: function(dropPosition) {
+      dropPosition = dropPosition || this.dropPosition;
+      var hasSpace = true;
+
+      /* The parent offset is needed for a proper calculation. The parent offset is only
+       * missing during the initial page render, at which time the menu is not visible,
+       * so it's okay to skip the space calculation. */
+      if (this.offsetParent) {
+        if (dropPosition === this.LEFT) {
+          var spaceOnRightSide = this._calculateSpaceOnRightSide(dropPosition);
+          var menuWidth = this._calculateMenuWidth();
+          hasSpace = spaceOnRightSide > menuWidth;
+        } else {
+          var spaceOnLeftSide = this._calculateSpaceOnLeftSide(dropPosition);
+          hasSpace = spaceOnLeftSide > 0;
+        }
+      }
+
+      return hasSpace;
+    },
+
+    /**
+     * Calculates the space between the left side of the browser and left side of the menu.
+     *
+     * @param dropPosition
+     * @returns {number}
+     */
+    _calculateSpaceOnLeftSide: function(dropPosition) {
+      /* The left position of the element containing the overflow menu. */
+      var offsetParentLeft = this.offsetParent.getBoundingClientRect().left;
+
+      /* The position of the left side of the menu, relative to its parent. */
+      var menuLeftPosition = this._calculateMenuLeftPosition(dropPosition);
+
+      return menuLeftPosition + offsetParentLeft;
+    },
+
+    /**
+     * Calculates the space between the right side of the browser and right side of the menu.
+     *
+     * @param dropPosition
+     * @returns {number}
+     */
+    _calculateSpaceOnRightSide: function(dropPosition) {
+      /* Width of the browser window. */
+      var windowWidth = document.body.getBoundingClientRect().width;
+
+      /* The position of the left side of the menu, relative to its parent. */
+      var menuLeftPosition = this._calculateMenuLeftPosition(dropPosition);
+
+      return windowWidth - menuLeftPosition;
+    },
+
+    /**
+     * Calculates the width of the menu.
+     *
+     * @returns {number}
+     */
+    _calculateMenuWidth: function() {
+      /* The width of the menu. Add some extra space to compensate for the vertical scroll bar. */
+      return this.$.contentDiv.offsetWidth + this.SCROLLBAR_WIDTH;
+    },
+
+    /**
+     * Initiate menu positioning.
+     *
+     * @param params
+     */
+    positionMenu: function(params) {
+      params = params || {};
+
+      if (params.target) {
+        this.target = params.target;
+      }
+
+      if (this.isContextMenu) {
+        this.async(this._doPositionContextMenu);
+      } else {
+        this.async(this._doPositionMenu);
+      }
+    },
+
+    /**
+     * Positions the context menu using coordinates.
+     */
+    _doPositionContextMenu: function() {
+      /* Remove the arrow. */
+      this.$.contentDiv.classList.remove('left-actions-menu');
+      this.$.contentDiv.classList.remove('right-actions-menu');
+
+      var position = this.calculateContextMenuPosition();
+      this.style.top = !position.top || isNaN(position.top)          ? 'auto' : (position.top    + 'px');
+      this.style.bottom = !position.bottom || isNaN(position.bottom) ? 'auto' : (position.bottom + 'px');
+      this.style.left = !position.left || isNaN(position.left)       ? 'auto' : (position.left   + 'px');
+      this.style.right = !position.right || isNaN(position.right)    ? 'auto' : (position.right  + 'px');
+    },
+
+    /**
+     * Calculate the postion of the context menu.
+     */
+    calculateContextMenuPosition: function() {
+      var windowHeight = window.innerHeight / 2;
+      var windowWidth = window.innerWidth / 2;
+      var position = {};
+
+      if (this.coordinates.y > windowHeight && this.coordinates.x <= windowWidth) {
+        // When user click on bottom-left part of window
+        position.bottom = window.innerHeight - this.coordinates.y;
+        position.left = this.coordinates.x;
+      } else if(this.coordinates.y > windowHeight && this.coordinates.x > windowWidth) {
+        // When user click on bottom-right part of window
+        position.bottom = window.innerHeight - this.coordinates.y;
+        position.right = window.innerWidth - this.coordinates.x;
+      } else if(this.coordinates.y <= windowHeight && this.coordinates.x <= windowWidth) {
+        // When user click on top-left part of window
+        position.top = this.coordinates.y;
+        position.left = this.coordinates.x;
+      } else {
+        // When user click on top-right part of window
+        position.top = this.coordinates.y;
+        position.right = window.innerWidth - this.coordinates.x;
+      }
+
+      return position;
+    },
+
+    /**
+     * Toggle the visibility of the menu;
+     *
+     * @param params
+     */
+    toggle: function(params) {
+      params = params || {};
+
+      if (params.target) {
+        this.target = params.target;
+      }
+
+      if (params.isMobile === undefined) {
+        params.isMobile = false;
+      }
+      this._isMobile = params.isMobile;
+
+      this.isContextMenu = false;
+      this._fireHideMenuEvent();
+      this.async(function() {
+        this.hidden = !this.hidden;
+        this.positionMenu();
+      });
+    },
+
+    /**
+     * Show as a context menu.
+     *
+     * @param coordinates (Optional) - The x/y coordinates of where the mouse was clicked. Used for
+     * context menu positioning.
+     */
+    showContextMenu: function(coordinates) {
+      this.isContextMenu = true;
+      this.coordinates = coordinates;
+      this._fireHideMenuEvent();
+      this.async(function() {
+        this.hidden = false;
+        this.positionMenu();
+      });
+    },
+
+    /**
+     * Hide the menu.
+     */
+    hide: function() {
+      this.hidden = true;
+    },
+
+    /**
+     * Handle the window resize event.
+     */
+    _handleResize: function() {
+      if (this.remainOpenOnResize) {
+        this.positionMenu();
+      } else {
+        this.hide();
+      }
+    },
+
+    /**
+     * Prevents the context menu from opening when right clicking on the menu.
+     *
+     * @param e
+     */
+    _preventDefaultContextMenu: function(e) {
+      if (e && e.preventDefault) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    },
+
+    /**
+     * Fires `hideOverflowMenuEvent` event.  This allows for all instances of the
+     * component to be hidden.
+     */
+    _fireHideMenuEvent: function() {
+      this.fire('hideOverflowMenuEvent');
+    }
+  });
+
+</script>
