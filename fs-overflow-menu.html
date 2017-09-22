@@ -15,22 +15,22 @@ An element providing a drop-down overflow menu.
 
 Example:
 
-    <birch-overflow-menu drop-position='right'>
+    <fs-overflow-menu drop-position='right'>
       <ul>
         <li>Item 1</li>
         <li>Item 2</li>
         <li>Item 3</li>
       </ul>
-    </birch-overflow-menu>
+    </fs-overflow-menu>
 
 @group Seed Elements
-@element birch-overflow-menu
+@element fs-overflow-menu
 @demo demo/index.html
 @hero hero.svg
 -->
-<dom-module id="birch-overflow-menu">
+<dom-module id="fs-overflow-menu">
   <style include='fs-styles'></style>
-  <link rel="import" type="css" href="birch-overflow-menu.css">
+  <link rel="import" type="css" href="fs-overflow-menu.css">
 
   <template>
     <div id='contentDiv' class='overflow-menu-container'  hidden='[[hideMenu]]'>
@@ -44,7 +44,7 @@ Example:
 
   Polymer({
 
-    is: 'birch-overflow-menu',
+    is: 'fs-overflow-menu',
 
     properties: {
       /**
