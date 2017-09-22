@@ -4,25 +4,25 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, user-scalable=yes">
 
-    <title>birch-overflow-menu test</title>
+    <title>fs-overflow-menu test</title>
 
     <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
     <script src="../../web-component-tester/browser.js"></script>
 
-    <link rel="import" href="../birch-overflow-menu.html">
+    <link rel="import" href="../fs-overflow-menu.html">
   </head>
   <body>
     <test-fixture id="basic">
       <template>
-        <birch-overflow-menu></birch-overflow-menu>
+        <fs-overflow-menu></fs-overflow-menu>
       </template>
     </test-fixture>
 
     <script>
-      suite('birch-overflow-menu', function() {
+      suite('fs-overflow-menu', function() {
         test('instantiating the element works', function() {
           var element = fixture('basic');
-          assert.equal(element.is, 'birch-overflow-menu');
+          assert.equal(element.is, 'fs-overflow-menu');
         });
       });
     </script>

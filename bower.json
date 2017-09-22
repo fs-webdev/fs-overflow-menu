@@ -1,6 +1,6 @@
 {
-  "name": "birch-overflow-menu",
-  "main": "birch-overflow-menu.html",
+  "name": "fs-overflow-menu",
+  "main": "fs-overflow-menu.html",
   "dependencies": {
     "polymer": "Polymer/polymer#^1.4.0",
     "fs-styles": "fs-webdev/fs-styles#2.x"

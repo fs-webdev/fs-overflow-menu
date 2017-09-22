@@ -4,13 +4,13 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, user-scalable=yes">
 
-    <title>birch-overflow-menu demo</title>
+    <title>fs-overflow-menu demo</title>
 
     <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
 
     <link rel="import" href="../../iron-demo-helpers/demo-pages-shared-styles.html">
     <link rel="import" href="../../iron-demo-helpers/demo-snippet.html">
-    <link rel="import" href="../birch-overflow-menu.html">
+    <link rel="import" href="../fs-overflow-menu.html">
 
     <style is="custom-style" include="demo-pages-shared-styles">
     </style>
@@ -25,13 +25,13 @@
           <button>Show Overflow Menu</button>
         </div>
 
-        <birch-overflow-menu drop-position='left' hidden id='menu-one'>
+        <fs-overflow-menu drop-position='left' hidden id='menu-one'>
           <ul>
             <li>Peter</li>
             <li>Paul</li>
             <li>Mary</li>
           </ul>
-        </birch-overflow-menu>
+        </fs-overflow-menu>
 
         <script>
           var menu = document.querySelector('#menu-one');
@@ -70,14 +70,14 @@
           </div>
           <h4>Click in the box above!</h4>
 
-          <birch-overflow-menu hidden id='menu-two'>
+          <fs-overflow-menu hidden id='menu-two'>
             <ul>
               <li>Paul</li>
               <li>John</li>
               <li>George</li>
               <li>Ringo</li>
             </ul>
-          </birch-overflow-menu>
+          </fs-overflow-menu>
 
           <script>
             document.getElementById('clickable-area').addEventListener('tap', function(event){
