@@ -1,5 +1,6 @@
 {
   "name": "fs-overflow-menu",
+  "version": "1.0.0",
   "main": "fs-overflow-menu.html",
   "dependencies": {
     "polymer": "Polymer/polymer#^1.4.0",
