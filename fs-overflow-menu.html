@@ -29,12 +29,83 @@ Example:
 @hero hero.svg
 -->
 <dom-module id="fs-overflow-menu">
-  <style include='fs-styles'></style>
-  <link rel="import" type="css" href="fs-overflow-menu.css">
-
   <template>
+    <style include='fs-styles'>
+      :host {
+        position: absolute;
+        z-index: 99;
+        width: -webkit-max-content; /* Safari */
+        width: max-content;
+      }
+
+      .overflow-menu-container {
+        position: relative;
+        background: #fff;
+        border-radius: 4px;
+        box-shadow: 0px 0px 4px 0px rgba(0,0,0,0.35), 0px 3px 2px 0px rgba(0,0,0,0.18);
+        width: auto;
+        height: auto;
+        margin-top: 10px;
+        min-width: 200px;
+        z-index: 1;
+      }
+
+      .overflow-menu-container:before {
+        background: #fff;
+        border-radius: 4px;
+        bottom: 0;
+        content: '';
+        left: 0;
+        position: absolute;
+        right: 0;
+        top: 0;
+        z-index: -1;
+      }
+
+      .overflow-actions-menu:after {
+        background: #fff;
+        top: -10px;
+        box-shadow: 1px 0px 4px 1px rgba(0,0,0,0.35), 0px 0px 2px 0px rgba(0,0,0,0.18);
+        content: '';
+        height: 20px;
+        right: 35px;
+        position: absolute;
+        -webkit-transform: translateX(-50%) rotate(45deg);
+        transform: translateX(-50%) rotate(45deg);
+        width: 20px;
+        z-index: -2;
+      }
+
+      .left-actions-menu:after{
+        background: #fff;
+        top: -10px;
+        box-shadow: 1px 0px 4px 1px rgba(0,0,0,0.35), 0px 0px 2px 0px rgba(0,0,0,0.18);
+        content: '';
+        height: 20px;
+        left: 30px;
+        position: absolute;
+        -webkit-transform: translateX(-50%) rotate(45deg);
+        transform: translateX(-50%) rotate(45deg);
+        width: 20px;
+        z-index: -2;
+      }
+
+      .right-actions-menu:after{
+        background: #fff;
+        top: -10px;
+        box-shadow: 1px 0px 4px 1px rgba(0,0,0,0.35), 0px 0px 2px 0px rgba(0,0,0,0.18);
+        content: '';
+        height: 20px;
+        right: 10px;
+        position: absolute;
+        -webkit-transform: translateX(-50%) rotate(45deg);
+        transform: translateX(-50%) rotate(45deg);
+        width: 20px;
+        z-index: -2;
+      }
+    </style>
     <div id='contentDiv' class='overflow-menu-container'  hidden='[[hideMenu]]'>
-      <content></content>
+      <slot></slot>
     </div>
   </template>
 
