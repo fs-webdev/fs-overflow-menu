@@ -255,7 +255,7 @@ Example:
       }
 
       /* Set the position of the menu. */
-      var menuLeftPosition = this._calculateMenuLeftPosition();
+      var menuLeftPosition = this._isMobile ? 10 : this._calculateMenuLeftPosition();
       this.style.left = menuLeftPosition + 'px';
 
       /* Needed for Safari. */
@@ -500,6 +500,7 @@ Example:
         params.isMobile = false;
       }
       this._isMobile = params.isMobile;
+      if (params.isMobile) this.dropPosition = "LEFT"
 
       this.isContextMenu = false;
       this._fireHideMenuEvent();
